@@ -6,24 +6,25 @@ package Controlador;
 
 import Modelo.CRUD.Cliente_CRUD;
 import Modelo.CRUD.Mecanico_CRUD;
-import Modelo.CRUD.Repara_CRUD;
 import Modelo.CRUD.Servicio_CRUD;
 import Modelo.CRUD.Tipo_CRUD;
 import Modelo.CRUD.Vehiculo_CRUD;
 import Modelo.Clases.Cliente;
 import Modelo.Clases.Mecanico;
-import Modelo.Clases.Reparacion;
 import Modelo.Clases.Servicio;
 import Modelo.Clases.Tipo;
 import Modelo.Clases.Vehiculo;
+import Herramientas.Transaccion.TxRepara;
 import Vista.Ventana_gestion;
 import Vista.Ventana_principal;
 import java.awt.Color;
+import java.awt.HeadlessException;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
@@ -45,6 +46,8 @@ public class Controlador implements ActionListener {
     public Controlador(Ventana_principal principal, Ventana_gestion gestion) {
         this.principal = principal;
         this.gestion = gestion;
+        
+        //Action Listeners
         this.principal.botonRegistrar.addActionListener(this);
         this.principal.botonBuscar.addActionListener(this);
         this.principal.botonMenuRegistrar.addActionListener(this);
@@ -103,28 +106,45 @@ public class Controlador implements ActionListener {
             Cliente cli = Cliente_CRUD.mostrarClienteNif(nif);
             Vehiculo veh = Vehiculo_CRUD.mostrarVehiculo(matricula);
             Tipo tip = Tipo_CRUD.mostrarTipoPk(veh.getFkTipo());
-            String mecanico = (String) gestion.comboMecanico.getSelectedItem();
-            Mecanico mec = Mecanico_CRUD.mostrarMecaNombre(mecanico);
-            int rowCount = gestion.tabla_servicios.getRowCount();
-            Date fechaIni = (Date) gestion.spinFechaIni.getValue();
-            Date fechaFin = (Date) gestion.spinFechaFin.getValue();
+            String mecanicoNombre = (String) gestion.comboMecanico.getSelectedItem();
+            
+            Mecanico mecanico = Mecanico_CRUD.mostrarMecaNombre(mecanicoNombre);
+
+            //Date fechaIni = (Date) gestion.spinFechaIni.getValue();
+            Date fechaIni = Date.valueOf(LocalDate.now());
+            //Date fechaFin = (Date) gestion.spinFechaFin.getValue();
+            
+            ArrayList<Servicio> servicios = new ArrayList<>();
+            
+            for(int fila = 0; fila < this.modelo.getRowCount(); fila++){
+                Servicio serv = new Servicio();
+                Object servicioObject = this.modelo.getValueAt(fila, 0);
+                String servicio = servicioObject.toString();
+                
+                serv = Servicio_CRUD.mostrarServicioCompleto(servicio);
+                
+                servicios.add(serv);                
+            }
 
             /**
              * Comprobar si existe un cliente y si no existe lo añade
              */
             if (!Cliente_CRUD.existeClienteNif(nif) && !nombre.isEmpty()) {
 
-                //metodoBotonGuardarCliente(nif, nombre);
-                /**
-                 * Si el nombre esta vacio salta ventana de error
-                 */
+                //Añade un nuevo Cliente
+                InsertaNuevoCliente(nif, nombre);
+                
+            /**
+             * Si el nombre esta vacio salta ventana de error
+             */
             } else if (nombre.isEmpty()) {
 
+                //Salta el ERROR
                 JOptionPane.showMessageDialog(gestion, "Rellena el campo Nombre.", "Error", JOptionPane.ERROR_MESSAGE);
 
                 /**
-                 * Comprobar si el nombre del cliente con el NIF introducido,
-                 * coincide con el nombre introducido
+                 * Comprobar el nombre del cliente con el NIF introducido.
+                 * Coincide con el nombre introducido
                  */
             } else if (cli.getNombre().equals(nombre)) {
                 /**
@@ -139,24 +159,13 @@ public class Controlador implements ActionListener {
                      * nombre del tipo coincide con el valor del comboBox
                      */
                 } else if (veh.getModelo().equals(modelo) && tip.getNombre().equals(tipo)) {
-
-                    long timeDifference = Math.abs(fechaFin.getTime() - fechaIni.getTime());
-
-                    long hours = timeDifference / (60 * 60 * 1000);
-                    long minutes = (timeDifference / (60 * 1000)) % 60;
-                    long seconds = (timeDifference / 1000) % 60;
-
-                    String elapsedTime = String.format("%02d:%02d:%02d", hours, minutes, seconds);
-
-                    Repara_CRUD.insertarReparacion(veh.getPkVehiculo(), fechaIni, fechaFin);
-                    Reparacion rep = Repara_CRUD.mostrarRepara(veh.getPkVehiculo());
-
-                    for (int i = 0; i < rowCount; i++) {
-                        Object value = gestion.tabla_servicios.getValueAt(i, 0);
-                        String serv = String.valueOf(value);
-
-                        //ServRep_CRUD.insertarSr(rep.getPkReparacion(), , elapsedTime);
+                    
+                    TxRepara tx = new TxRepara();
+                    
+                    for(Servicio serv : servicios){
+                        tx.Reparacion(veh.getPkVehiculo(), mecanico.getPkMecanico(), serv.getPkServicio(), fechaIni);
                     }
+                    
                     /**
                      * Si no es nada de lo anterior, añade el vehiculo
                      */
@@ -214,7 +223,7 @@ public class Controlador implements ActionListener {
      * @param nombre
      * @throws HeadlessException
      */
-    private void metodoBotonGuardarCliente(String nif, String nombre) {
+    private void InsertaNuevoCliente(String nif, String nombre) {
         int respuesta = JOptionPane.showConfirmDialog(
                 null,
                 "El cliente no exite, ¿Deseas guardar al cliente nuevo?",

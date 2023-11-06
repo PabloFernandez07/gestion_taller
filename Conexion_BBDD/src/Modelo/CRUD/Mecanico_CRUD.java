@@ -6,13 +6,10 @@ package Modelo.CRUD;
 
 import Modelo.BBDD.Conexion_bbdd;
 import Modelo.Clases.Mecanico;
-import Modelo.Clases.Vehiculo;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *

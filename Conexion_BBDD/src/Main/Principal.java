@@ -6,13 +6,10 @@ package Main;
 
 import Controlador.Controlador;
 import Modelo.BBDD.Conexion_bbdd;
-import Modelo.CRUD.Mecanico_CRUD;
-import Modelo.Clases.Mecanico;
 import java.sql.Connection;
 import java.sql.SQLException;
 import Vista.Ventana_gestion;
 import Vista.Ventana_principal;
-import java.util.ArrayList;
 
 /**
  *

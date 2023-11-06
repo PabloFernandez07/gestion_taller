@@ -5,8 +5,6 @@
 package Modelo.BBDD;
  
 import java.sql.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 /**
  *
  * @author dam114
@@ -23,10 +21,9 @@ public class Conexion_bbdd {
     /**
      * 
      * Conexion a la BBDD
-     * @throws java.sql.SQLException
      */
     
-    public Conexion_bbdd() throws SQLException{
+    public Conexion_bbdd(){
         try {
             Class.forName(JDBC_DRIVER).newInstance();
             conn=DriverManager.getConnection(DBURL, USER, PASS);
@@ -56,10 +53,9 @@ public class Conexion_bbdd {
     /**
      * 
      * Getter
-     * @return 
-     * @throws java.sql.SQLException
+     * @return
      */
-    public static Conexion_bbdd getInstance() throws SQLException{
+    public static Conexion_bbdd getInstance(){
         if(INSTANCE == null){
             INSTANCE = new Conexion_bbdd();
         }

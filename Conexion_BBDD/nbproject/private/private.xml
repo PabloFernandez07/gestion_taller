@@ -5,14 +5,6 @@
         <group>
             <file>file:/E:/OneDrive%20-%20Educantabria/archivos%20de%20clase/Desarrollo%20de%20aplicaciones%20multiplataforma/Dam%202/Acceso%20a%20datos/Acceso%20a%20BBDD/Ejercicios/Conexion_BBDD/src/Main/Principal.java</file>
         </group>
-        <group name="Acceso a datos">
-            <file>file:/D:/Users/dam211/Documents/Acceso%20a%20datos/Repositorios_git/Gestion_Taller/Conexion_BBDD/src/Main/Principal.java</file>
-            <file>file:/D:/Users/dam211/Documents/Acceso%20a%20datos/Repositorios_git/Gestion_Taller/Conexion_BBDD/src/Herramientas/Transaccion/TxRepara.java</file>
-            <file>file:/D:/Users/dam211/Documents/Acceso%20a%20datos/Repositorios_git/Gestion_Taller/Conexion_BBDD/src/Modelo/CRUD/Servicio_CRUD.java</file>
-            <file>file:/D:/Users/dam211/Documents/Acceso%20a%20datos/Repositorios_git/Gestion_Taller/Conexion_BBDD/src/Modelo/CRUD/Mecanico_CRUD.java</file>
-            <file>file:/D:/Users/dam211/Documents/Acceso%20a%20datos/Repositorios_git/Gestion_Taller/Conexion_BBDD/src/Modelo/Clases/Servicio.java</file>
-            <file>file:/D:/Users/dam211/Documents/Acceso%20a%20datos/Repositorios_git/Gestion_Taller/Conexion_BBDD/src/Controlador/Controlador.java</file>
-            <file>file:/D:/Users/dam211/Documents/Acceso%20a%20datos/Repositorios_git/Gestion_Taller/Conexion_BBDD/src/Modelo/Clases/Mecanico.java</file>
-        </group>
+        <group name="Acceso a datos"/>
     </open-files>
 </project-private>

@@ -15,6 +15,7 @@ import Modelo.Clases.Servicio;
 import Modelo.Clases.Tipo;
 import Modelo.Clases.Vehiculo;
 import Herramientas.Transaccion.TxRepara;
+import Modelo.BBDD.Conexion_bbdd;
 import Vista.Ventana_gestion;
 import Vista.Ventana_principal;
 import java.awt.Color;
@@ -23,9 +24,19 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseListener;
+import java.sql.Connection;
 import java.sql.Date;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.table.DefaultTableModel;
@@ -34,18 +45,24 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author dam211
  */
-public class Controlador implements ActionListener {
+public class Controlador implements ActionListener, FocusListener {
 
     Ventana_principal principal;
     Ventana_gestion gestion;
     Image iconoPropio = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/imagenes/icono_taller.png"));
 
+    //Creo la Conexion_bbdd con la BBDD
+    Conexion_bbdd c = new Conexion_bbdd();
+    Connection conn = c.getConnection();
+
     String[] columnas = {"Servicio", "Precio"};
     DefaultTableModel modelo = new DefaultTableModel(columnas, 0);
 
-    public Controlador(Ventana_principal principal, Ventana_gestion gestion) {
+    public Controlador(Ventana_principal principal, Ventana_gestion gestion, Connection conn) {
         this.principal = principal;
         this.gestion = gestion;
+        this.conn = conn;
+        
         
         //Action Listeners
         this.principal.botonRegistrar.addActionListener(this);
@@ -59,8 +76,10 @@ public class Controlador implements ActionListener {
         this.gestion.comboTipo.addActionListener(this);
         this.gestion.botonAñadir.addActionListener(this);
         this.gestion.botonEliminar.addActionListener(this);
-        //this.gestion.panelInferior.addAncestorListener(this);
 
+        //Focus Listeners
+        this.gestion.txt_matricula.addFocusListener(this);
+        //this.gestion.panelInferior.addAncestorListener(this);
     }
 
     public void iniciar() {
@@ -71,7 +90,35 @@ public class Controlador implements ActionListener {
     }
 
     @Override
+    public void focusGained(FocusEvent e) {
+
+    }
+
+    @Override
+    public void focusLost(FocusEvent e) {
+        if (e.getSource() == gestion.txt_matricula) {
+            String matricula = gestion.txt_matricula.getText();
+            Vehiculo veh = Vehiculo_CRUD.mostrarVehiculo(matricula);
+            Tipo tip = Tipo_CRUD.mostrarTipoPk(veh.getFkTipo());
+
+            gestion.txt_modelo.setText(veh.getModelo());
+
+            if (gestion.comboTipo.getItemCount() != 0) {
+                gestion.comboTipo.removeItemAt(0);
+            }
+
+            if (tip.getPkTipo() == 0) {
+                gestion.comboTipo.removeItemAt(0);
+            } else {
+                gestion.comboTipo.addItem(tip.getNombre());
+            }
+
+        }
+    }
+
+    @Override
     public void actionPerformed(ActionEvent e) {
+
         /**
          * Boton menu principal Registrar
          */
@@ -107,83 +154,85 @@ public class Controlador implements ActionListener {
             Vehiculo veh = Vehiculo_CRUD.mostrarVehiculo(matricula);
             Tipo tip = Tipo_CRUD.mostrarTipoPk(veh.getFkTipo());
             String mecanicoNombre = (String) gestion.comboMecanico.getSelectedItem();
-            
+
             Mecanico mecanico = Mecanico_CRUD.mostrarMecaNombre(mecanicoNombre);
 
             //Date fechaIni = (Date) gestion.spinFechaIni.getValue();
             Date fechaIni = Date.valueOf(LocalDate.now());
             //Date fechaFin = (Date) gestion.spinFechaFin.getValue();
-            
+
             ArrayList<Servicio> servicios = new ArrayList<>();
-            
-            for(int fila = 0; fila < this.modelo.getRowCount(); fila++){
+            /*---*/
+            for (int fila = 0; fila < this.modelo.getRowCount(); fila++) {
                 Servicio serv = new Servicio();
                 Object servicioObject = this.modelo.getValueAt(fila, 0);
                 String servicio = servicioObject.toString();
-                
+
                 serv = Servicio_CRUD.mostrarServicioCompleto(servicio);
-                
-                servicios.add(serv);                
+
+                servicios.add(serv);
             }
 
-            /**
-             * Comprobar si existe un cliente y si no existe lo añade
-             */
+            //Comprobar si existe un cliente y si no existe lo añade
             if (!Cliente_CRUD.existeClienteNif(nif) && !nombre.isEmpty()) {
 
                 //Añade un nuevo Cliente
                 InsertaNuevoCliente(nif, nombre);
-                
-            /**
-             * Si el nombre esta vacio salta ventana de error
-             */
+
+                //Si el nombre esta vacio salta ventana de error
             } else if (nombre.isEmpty()) {
 
                 //Salta el ERROR
                 JOptionPane.showMessageDialog(gestion, "Rellena el campo Nombre.", "Error", JOptionPane.ERROR_MESSAGE);
 
-                /**
-                 * Comprobar el nombre del cliente con el NIF introducido.
-                 * Coincide con el nombre introducido
-                 */
+                //Comprobar el nombre del cliente con el NIF introducido.
+                //Coincide con el nombre introducido
             } else if (cli.getNombre().equals(nombre)) {
-                /**
-                 * Si los 3 campos estan vaciados, salta ERROR
-                 */
+
+                //Si los 3 campos estan vaciados, salta ERROR
                 if (matricula.isEmpty() || modelo.isEmpty() || tipo.isEmpty()) {
 
                     JOptionPane.showMessageDialog(gestion, "Rellena los campos matricula y modelo.", "Error", JOptionPane.ERROR_MESSAGE);
 
-                    /**
-                     * Compara el modelo de la BBDD con el introducido y el
-                     * nombre del tipo coincide con el valor del comboBox
-                     */
+                    //Compara el modelo de la BBDD con el introducido y el
+                    //nombre del tipo coincide con el valor del comboBox
                 } else if (veh.getModelo().equals(modelo) && tip.getNombre().equals(tipo)) {
-                    
+
                     TxRepara tx = new TxRepara();
-                    
-                    for(Servicio serv : servicios){
-                        tx.Reparacion(veh.getPkVehiculo(), mecanico.getPkMecanico(), serv.getPkServicio(), fechaIni);
+                
+                //Creo la transaccion con la conexion fuera de esta.
+
+                    try {
+                        conn.setAutoCommit(false);
+
+                        for (Servicio serv : servicios) {
+                            tx.Reparacion(conn, veh.getPkVehiculo(), mecanico.getPkMecanico(), serv.getPkServicio(), fechaIni);
+                        }
+
+                        conn.commit();
+                        conn.setAutoCommit(true);
+                        //Si no es nada de lo anterior, añade el vehiculo
+                    } catch (SQLException ex) {
+                        try {
+                            conn.rollback();
+                        } catch (SQLException ex1) {
+                            System.out.println("ERROR GRAVE, Problemas al realizar el rollback.");
+                        }
+                        System.out.println("Error al realizar el commit. " + ex.getMessage());
                     }
-                    
-                    /**
-                     * Si no es nada de lo anterior, añade el vehiculo
-                     */
+
                 } else {
                     Tipo tipoVeh = Tipo_CRUD.mostrarTipoNombre(tipo);
 
                     Vehiculo_CRUD.insertarVehiculo(tipoVeh.getPkTipo(), matricula, modelo, cli.getPkCliente());
                 }
-                /**
-                 * Si el nombre no coincide con el Nif, salta error.
-                 */
-            }else{
+
+                //Si el nombre no coincide con el Nif, salta error.
+            } else {
                 JOptionPane.showMessageDialog(gestion, "El nombre no coincide con el NIF");
             }
 
-            /**
-             * Boton de cancelar
-             */
+            //Boton de cancelar
         } else if (e.getSource() == this.gestion.botonCancelar) {
 
             metodoBotonCancelar();
@@ -269,7 +318,6 @@ public class Controlador implements ActionListener {
 
         ArrayList<Mecanico> mecanicos = Mecanico_CRUD.mostrarMeca();
         ArrayList<Servicio> servicios = Servicio_CRUD.mostrarServ();
-        ArrayList<Tipo> tipos = Tipo_CRUD.mostrarTipo();
 
         /**
          * Llenar el ComboBox con los nombres de los mecánicos
@@ -283,13 +331,6 @@ public class Controlador implements ActionListener {
          */
         for (Servicio servicio : servicios) {
             gestion.comboServicio.addItem(servicio.getNombre());
-        }
-
-        /**
-         * Llenar el ComboBox con los nombres de los tipos
-         */
-        for (Tipo tipo : tipos) {
-            gestion.comboTipo.addItem(tipo.getNombre());
         }
 
         this.gestion.setLocationRelativeTo(principal);

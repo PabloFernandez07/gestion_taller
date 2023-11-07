@@ -11,8 +11,7 @@ import java.sql.SQLException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Date;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -24,17 +23,9 @@ public class TxRepara {
     static String sql_2 = "INSERT INTO servicio_repara(pkSr, fkServicio, fkRepara, fkMecanico) VALUES (?,?,?,?);";
     static String sql_3 = "SELECT * FROM repara WHERE fkVehiculo = ? AND fechaFin IS NULL;";
 
-    public static void Reparacion(int pkVehiculo, int pkMecanico, int pkServicio, Date fechaIni) {
+    public static void Reparacion(Connection conn, int pkVehiculo, int pkMecanico, int pkServicio, Date fechaIni) throws SQLException {
 
-        //Creo la Conexion_bbdd con la BBDD
-        Conexion_bbdd c = new Conexion_bbdd();
-        Connection conn = c.getConnection();
-
-        try {
             Reparacion repara = new Reparacion();
-            
-            //Tomo el control de la conexion
-            conn.setAutoCommit(false);
 
             int pkReparaMax = maxPkRepara(conn) + 1;
             
@@ -44,29 +35,8 @@ public class TxRepara {
             repara = ExisteReparacion(conn, pkVehiculo, pkReparaMax, fechaIni);
 
             //Si se ha creado la Reparacion, inserta una nueva linea de Servicio_repara.
-            int insertado = NuevoServicioRepara(conn, pkServicio, repara.getPkReparacion(), pkMecanico);
+            NuevoServicioRepara(conn, pkServicio, repara.getPkReparacion(), pkMecanico);
 
-            if (insertado == 1) {
-                System.out.println("Servicio_Repara introducido con exito");
-
-            }
-
-            conn.commit();
-            conn.setAutoCommit(true);
-        } catch (SQLException ex) {
-            try {
-                conn.rollback();
-            } catch (SQLException ex1) {
-                System.err.println("ERROR GRAVE, Problemas al realizar el Rollback. "+ex.getMessage());
-            }
-            System.err.println("Error en la sentencia SQL. " + ex.getMessage());
-        } finally{
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                System.err.println("Error al cerrar la conexion. "+ex.getMessage());
-            }
-        }
 
     }
 

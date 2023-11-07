@@ -162,6 +162,7 @@ public class Ventana_gestion extends javax.swing.JDialog {
         lbl_modelo.setText("Modelo:");
         panelDatosVehiculo.add(lbl_modelo, new org.netbeans.lib.awtextra.AbsoluteConstraints(11, 80, 76, 37));
 
+        txt_modelo.setEditable(false);
         txt_modelo.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         txt_modelo.setForeground(new java.awt.Color(0, 0, 0));
         txt_modelo.setToolTipText("Introduce el modelo del vehiculo");
